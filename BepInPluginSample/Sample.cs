@@ -45,6 +45,8 @@ namespace BepInPluginSample
 
         private static ConfigEntry<bool> noTP;
         private static ConfigEntry<bool> noDamage;
+        private static ConfigEntry<bool> ultimate;
+        private static ConfigEntry<bool> changeOverDrive;
         // private static ConfigEntry<float> uiW;
         // private static ConfigEntry<float> xpMulti;
 
@@ -78,7 +80,9 @@ namespace BepInPluginSample
             // =========================================================
 
             noTP = Config.Bind("game", "noTP", true);
-            noDamage = Config.Bind("game", "noTP", true);
+            noDamage = Config.Bind("game", "noDamage", true);
+            ultimate = Config.Bind("game", "ultimate", true);
+            changeOverDrive = Config.Bind("game", "changeOverDrive", true);
             // xpMulti = Config.Bind("game", "xpMulti", 2f);
 
             // =========================================================
@@ -198,10 +202,24 @@ namespace BepInPluginSample
                 #endregion
                 if (GUILayout.Button($"noTP {noTP.Value}")) { noTP.Value = !noTP.Value; }
                 if (GUILayout.Button($"nnoDamageo {noDamage.Value}")) { noDamage.Value = !noDamage.Value; }
+                if (GUILayout.Button($"ultimate {ultimate.Value}")) { ultimate.Value = !ultimate.Value; }
+                if (GUILayout.Button($"changeOverDrive {changeOverDrive.Value}")) { changeOverDrive.Value = !changeOverDrive.Value; }
 
                 GUILayout.Label($"---  ---");
                 GUILayout.Label($"playTime  ; {GameManager.playTime}");                
                 if (GUILayout.Button($"money = 999999 ; {GameManager.money}")) { GameManager.money = 999999; }
+                if (GUILayout.Button($"ultimate = 100 ; {Battle.ultimate}")) { Battle.ultimate = 100; }
+                if (GUILayout.Button($"ODMultiplicator = 70 ; {BattleFunctions.ODMultiplicator}")) { BattleFunctions.ODMultiplicator = 70; }
+                //if (GUILayout.Button($"targetOverride = 70 ; {BattleFunctions.targetOverride}")) { BattleFunctions.targetOverride = 70; }
+                //if (GUILayout.Button($"targetOverrideTurn ; {BattleFunctions.targetOverrideTurn}")) { BattleFunctions.targetOverrideTurn = !BattleFunctions.targetOverrideTurn; }
+
+                if (BattleFunctions.instance)
+                {
+                }
+                else
+                {
+                    GUILayout.Label($"--- BattleFunctions null ---");
+                }
                 
                 //foreach (var item in Battle.partyGO)
                 if (GetData.instance)
@@ -272,6 +290,26 @@ namespace BepInPluginSample
                 currentStats.Add(item.GetComponent<CurrentStats>());
                
             }
+            if (ultimate.Value)
+            {
+                //GameManager.ultimate = 100;
+                Battle.ultimate = 100;
+            }
+            if (changeOverDrive.Value)
+                BattleFunctions.ODMultiplicator = 70;
+        }
+
+        //public static void ChangeUltimate(int mod, GameObject user = null, bool setInsteadOfRaise = false)
+        [HarmonyPatch(typeof(BattleFunctions), "ChangeUltimate", typeof(int),typeof(GameObject), typeof(bool))]
+        [HarmonyPostfix]
+        public static void ChangeUltimate(int mod, GameObject user , bool setInsteadOfRaise)
+        {
+            logger.LogMessage($"ChangeUltimate ; {mod} ; {setInsteadOfRaise}");
+            if (ultimate.Value)
+            {
+                //GameManager.ultimate = 100;
+                Battle.ultimate = 100;
+            }
         }
 
         //public static void SpendTP(int user, int skill)
@@ -305,6 +343,18 @@ namespace BepInPluginSample
                     logger.LogMessage($"Damage ; {c.name} ; {c.currentHP} ; {c.maxHP} ;");
                     c.currentHP = c.maxHP;
                 }
+
+
+        }
+
+        //public static void ChangeOverDrive(int mod, bool enemyTurn = false)
+        [HarmonyPatch(typeof(BattleFunctions), "ChangeOverDrive", typeof(int), typeof(bool))]
+        [HarmonyPostfix]
+        public static void ChangeOverDrive(int mod, bool enemyTurn)//BattleFunctions __instance,
+        {
+            logger.LogMessage($"ChangeOverDrive ; {mod} ; {enemyTurn} ");
+            if (changeOverDrive.Value)
+                BattleFunctions.ODMultiplicator = 70;
 
 
         }
